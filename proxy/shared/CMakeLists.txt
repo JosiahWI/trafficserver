@@ -23,4 +23,4 @@ target_include_directories(diagsconfig PRIVATE
         ${YAMLCPP_INCLUDE_DIR}
 )
 
-target_link_libraries(diagsconfig PRIVATE PCRE::PCRE) # transitive
+target_link_libraries(diagsconfig PUBLIC ts::tscore)

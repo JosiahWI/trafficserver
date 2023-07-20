@@ -34,7 +34,6 @@ add_library(inkcache STATIC
 if(BUILD_REGRESSION_TESTING)
     target_sources(inkcache PRIVATE CacheTest.cc)
 endif()
-target_link_libraries(inkcache PRIVATE ZLIB::ZLIB)
 if(HAVE_LZMA_H)
     target_link_libraries(inkcache PRIVATE LibLZMA::LibLZMA)
 endif()
@@ -51,4 +50,11 @@ target_include_directories(inkcache PRIVATE
         ${CMAKE_SOURCE_DIR}/proxy/http/remap
         ${CMAKE_SOURCE_DIR}/proxy/hdrs
         ${CMAKE_SOURCE_DIR}/lib
+)
+
+target_link_libraries(inkcache
+    PUBLIC
+        ts::tscore
+    PRIVATE
+        ZLIB::ZLIB
 )

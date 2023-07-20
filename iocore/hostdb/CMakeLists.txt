@@ -36,4 +36,4 @@ target_include_directories(inkhostdb PRIVATE
         ${CMAKE_SOURCE_DIR}/proxy/hdrs
 )
 
-target_link_libraries(inkhostdb PRIVATE PCRE::PCRE) # transitive
+target_link_libraries(inkhostdb PUBLIC ts::tscore)

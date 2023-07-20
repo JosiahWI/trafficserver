@@ -27,4 +27,4 @@ include_directories(
         ${IOCORE_INCLUDE_DIRS}
 )
 
-target_link_libraries(configmanager PRIVATE PCRE::PCRE) # transitive
+target_link_libraries(configmanager PUBLIC ts::tscore)
