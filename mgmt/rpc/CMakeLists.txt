@@ -32,12 +32,16 @@ add_library(jsonrpc_protocol STATIC
         jsonrpc/Context.cc
 )
 
+target_link_libraries(jsonrpc_protocol PRIVATE PCRE::PCRE) # transitive
+
 add_library(jsonrpc_server STATIC
         server/RPCServer.cc
         server/CommBase.cc
         server/IPCSocketServer.cc
         config/JsonRPCConfig.cc
 )
+
+target_link_libraries(jsonrpc_server PRIVATE PCRE::PCRE) # transitive
 
 add_library(rpcpublichandlers STATIC
         handlers/common/RecordsUtils.cc
@@ -47,3 +51,5 @@ add_library(rpcpublichandlers STATIC
         handlers/server/Server.cc
         handlers/plugins/Plugins.cc
 )
+
+target_link_libraries(rpcpublichandlers PRIVATE PCRE::PCRE) # transitive
