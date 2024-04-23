@@ -39,6 +39,7 @@
 #include "tscore/hugepages.h"
 #include "tscore/ink_assert.h"
 #include "tscore/ink_memory.h"
+#include "tscore/List.h"
 
 #include <cstring>
 
@@ -58,6 +59,15 @@ compare_ushort(void const *a, void const *b)
 {
   return *static_cast<unsigned short const *>(a) - *static_cast<unsigned short const *>(b);
 }
+
+template <typename T, typename U>
+constexpr double
+percent(T part, U whole)
+{
+  return static_cast<double>(part) / static_cast<double>(whole) * 100.0;
+}
+
+constexpr int DIRECTORY_FOOTER_SIZE{ROUND_TO_STORE_BLOCK(sizeof(StripteHeaderFooter))};
 
 } // namespace
 
@@ -186,6 +196,61 @@ Stripe::clear_dir()
   return 0;
 }
 
+Stripe::Stripe(off_t blocks, off_t dir_skip)
+  : Continuation{new_ProxyMutex()},
+    skip{ROUND_TO_STORE_BLOCK((dir_skip < START_POS ? START_POS : dir_skip))},
+    start{skip},
+    len{blocks * STORE_BLOCK_SIZE}
+{
+  ink_assert(this->len < MAX_STRIPE_SIZE);
+
+  this->_init_data(STORE_BLOCK_SIZE);
+  this->_init_directory(this->dirlen(), this->headerlen(), DIRECTORY_FOOTER_SIZE);
+  this->_init_hit_evacuate_window(this->data_blocks, cache_config_hit_evacuate_percent);
+  this->_init_evacuation_list(EVACUATION_BUCKET_SIZE);
+  open_dir.mutex = this->mutex;
+  SET_HANDLER(&Stripe::aggWrite);
+}
+
+void
+Stripe::_init_directory(std::size_t const directory_size, int const header_size, int const footer_size)
+{
+  ink_assert(directory_size <= static_cast<std::size_t>(this->len));
+  // It's probably invalid for the directory to be this small, but at least we
+  // know we will allocate sufficient space for the data we initialize
+  // pointers to, and we can't corrupt our dir pointer by writing to the
+  // footer.
+  ink_assert(directory_size >= sizeof(Dir) + header_size + footer_size);
+
+  Dbg(dbg_ctl_cache_init, "Stripe %s: allocating %zu directory bytes for a %lld byte volume (%lf%%)", hash_text.get(),
+      directory_size, (long long)this->len, percent(directory_size, this->len));
+  if (ats_hugepage_enabled()) {
+    this->raw_dir = static_cast<char *>(ats_alloc_hugepage(directory_size));
+  }
+  if (nullptr == this->raw_dir) {
+    this->raw_dir = static_cast<char *>(ats_memalign(ats_pagesize(), directory_size));
+  }
+  this->dir    = reinterpret_cast<Dir *>(this->raw_dir + header_size);
+  this->header = reinterpret_cast<StripteHeaderFooter *>(this->raw_dir);
+  std::size_t const footer_offset{directory_size - static_cast<std::size_t>(footer_size)};
+  this->footer = reinterpret_cast<StripteHeaderFooter *>(this->raw_dir + footer_offset);
+}
+
+void
+Stripe::_init_hit_evacuate_window(off_t const data_blocks, int const hit_evacuate_percent)
+{
+  this->hit_evacuate_window = (data_blocks * hit_evacuate_percent) / 100;
+}
+
+void
+Stripe::_init_evacuation_list(off_t const bucket_size)
+{
+  this->evacuate_size = static_cast<int>(this->len / bucket_size) + 2;
+  std::size_t const evac_len{this->evacuate_size * sizeof(DLL<EvacuationBlock>)};
+  this->evacuate = static_cast<DLL<EvacuationBlock> *>(ats_malloc(evac_len));
+  std::memset(static_cast<void *>(this->evacuate), 0, evac_len);
+}
+
 int
 Stripe::init(char *s, off_t blocks, off_t dir_skip, bool clear)
 {
@@ -203,34 +268,14 @@ Stripe::init(char *s, off_t blocks, off_t dir_skip, bool clear)
   path     = ats_strdup(s);
   len      = blocks * STORE_BLOCK_SIZE;
   ink_assert(len <= MAX_STRIPE_SIZE);
-  skip             = dir_skip;
-  prev_recover_pos = 0;
+  skip = dir_skip;
 
   // successive approximation, directory/meta data eats up some storage
   start = dir_skip;
-  this->_init_data();
-  data_blocks         = (len - (start - skip)) / STORE_BLOCK_SIZE;
-  hit_evacuate_window = (data_blocks * cache_config_hit_evacuate_percent) / 100;
-
-  evacuate_size = static_cast<int>(len / EVACUATION_BUCKET_SIZE) + 2;
-  int evac_len  = evacuate_size * sizeof(DLL<EvacuationBlock>);
-  evacuate      = static_cast<DLL<EvacuationBlock> *>(ats_malloc(evac_len));
-  memset(static_cast<void *>(evacuate), 0, evac_len);
-
-  Dbg(dbg_ctl_cache_init, "Vol %s: allocating %zu directory bytes for a %lld byte volume (%lf%%)", hash_text.get(), dirlen(),
-      (long long)this->len, (double)dirlen() / (double)this->len * 100.0);
-
-  raw_dir = nullptr;
-  if (ats_hugepage_enabled()) {
-    raw_dir = static_cast<char *>(ats_alloc_hugepage(this->dirlen()));
-  }
-  if (raw_dir == nullptr) {
-    raw_dir = static_cast<char *>(ats_memalign(ats_pagesize(), this->dirlen()));
-  }
-
-  dir    = reinterpret_cast<Dir *>(raw_dir + this->headerlen());
-  header = reinterpret_cast<StripteHeaderFooter *>(raw_dir);
-  footer = reinterpret_cast<StripteHeaderFooter *>(raw_dir + this->dirlen() - ROUND_TO_STORE_BLOCK(sizeof(StripteHeaderFooter)));
+  this->_init_data(STORE_BLOCK_SIZE);
+  this->_init_directory(this->dirlen(), this->headerlen(), DIRECTORY_FOOTER_SIZE);
+  this->_init_hit_evacuate_window(this->data_blocks, cache_config_hit_evacuate_percent);
+  this->_init_evacuation_list(EVACUATION_BUCKET_SIZE);
 
   if (clear) {
     Note("clearing cache directory '%s'", hash_text.get());
@@ -238,8 +283,7 @@ Stripe::init(char *s, off_t blocks, off_t dir_skip, bool clear)
   }
 
   init_info           = new StripeInitInfo();
-  int   footerlen     = ROUND_TO_STORE_BLOCK(sizeof(StripteHeaderFooter));
-  off_t footer_offset = this->dirlen() - footerlen;
+  off_t footer_offset = this->dirlen() - DIRECTORY_FOOTER_SIZE;
   // try A
   off_t as = skip;
 
@@ -255,7 +299,7 @@ Stripe::init(char *s, off_t blocks, off_t dir_skip, bool clear)
     AIOCallback *aio      = &(init_info->vol_aio[i]);
     aio->aiocb.aio_fildes = fd;
     aio->aiocb.aio_buf    = &(init_info->vol_h_f[i * STORE_BLOCK_SIZE]);
-    aio->aiocb.aio_nbytes = footerlen;
+    aio->aiocb.aio_nbytes = DIRECTORY_FOOTER_SIZE;
     aio->action           = this;
     aio->thread           = AIO_CALLBACK_THREAD_ANY;
     aio->then             = (i < 3) ? &(init_info->vol_aio[i + 1]) : nullptr;
@@ -927,8 +971,9 @@ Stripe::_init_data_internal()
 }
 
 void
-Stripe::_init_data()
+Stripe::_init_data(off_t const store_block_size)
 {
+  this->data_blocks = (this->len - (this->start - this->skip)) / store_block_size;
   // iteratively calculate start + buckets
   this->_init_data_internal();
   this->_init_data_internal();

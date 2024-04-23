@@ -33,6 +33,7 @@
 
 #include "tscore/CryptoHash.h"
 
+#include <cstddef>
 #include <atomic>
 
 #define CACHE_BLOCK_SHIFT        9
@@ -275,6 +276,11 @@ public:
     SET_HANDLER(&Stripe::aggWrite);
   }
 
+  /**
+   * @param blocks: Number of blocks. Must be at least 10. TODO recheck this
+   */
+  Stripe(off_t blocks, off_t dir_skip);
+
   Queue<CacheVC, Continuation::Link_link> &get_pending_writers();
   int                                      get_agg_buf_pos() const;
 
@@ -328,7 +334,10 @@ private:
   void _clear_init();
   void _init_dir();
   void _init_data_internal();
-  void _init_data();
+  void _init_data(off_t const store_block_size);
+  void _init_directory(std::size_t const directory_size, int const header_size, int const footer_size);
+  void _init_hit_evacuate_window(off_t const data_blocks, int const hit_evacuate_percent);
+  void _init_evacuation_list(off_t const bucket_size);
   int  _agg_copy(CacheVC *vc);
   int  _copy_writer_to_aggregation(CacheVC *vc);
   int  _copy_evacuator_to_aggregation(CacheVC *vc);
