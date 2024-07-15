@@ -122,6 +122,10 @@ class TestRedirectToSameOriginOnCache:
 
         ts.Disk.remap_config.AddLine(f"map oof.com http://oof.backend.com:{server_one.Variables.http_port}")
 
+        ts.Disk.storage_config.AddLine("storage 128M")
+        ts.Disk.hosting_config.AddLine("hostname=* volume=1")
+        ts.Disk.volume_config.AddLine("volume=1 scheme=http size=100%")
+
         self._ts = ts
 
 
