@@ -1,0 +1,14 @@
+every config has a top-level key so that you can put all configs in the same file
+splitDNS lets you split your resolution among multiple nameservers
+use a YAML list; a list of records where each one has a domain a host etc.
+take advantage of the YAMl lists to avoid internal string parsing
+for named we can parse the internal string of name:port; that's probably reasonable
+Alan thinks it's really good to make lists optional - if it's only one value pretend it's a list of size 1
+error reporting for errors loading file and errors parsing YAML are separated
+all tag names should be static std::strings
+use tscore for regex parsing
+just do the simple thing for the matching
+for each table, if you find a match in the table, it then takes the index of the matched
+major performance win we can do, which is we should pick the cheapest one to pick first, and not look at records past that index
+and order those from cheapest to most expensive
+we should have a generic domain matcher logic (Alan's side comment)
