@@ -138,7 +138,7 @@ protected:
 // Server
 //
 ///////////////////////////////////////////////////////////////////////
-struct Server : public Connection {
+struct Server {
   /// Client side (inbound) local IP address.
   IpEndpoint accept_addr;
 
@@ -146,6 +146,8 @@ struct Server : public Connection {
   bool http_accept_filter = false;
 
   int accept(Connection *c);
+
+  int close() { return 0; }
 
   //
   // Listen on a socket. We assume the port is in host by order, but
@@ -157,5 +159,8 @@ struct Server : public Connection {
   int setup_fd_for_listen(bool non_blocking, const NetProcessor::AcceptOptions &opt);
   int setup_fd_after_listen(const NetProcessor::AcceptOptions &opt);
 
-  Server() : Connection() { ink_zero(accept_addr); }
+  Server() { ink_zero(accept_addr); }
+
+  UnixSocket sock{NO_SOCK};
+  IpEndpoint addr;
 };

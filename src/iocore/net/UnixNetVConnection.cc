@@ -1212,7 +1212,7 @@ UnixNetVConnection::connectUp(EThread *t, int fd)
     // is only used when setting up the socket.
     safe_getsockopt(fd, SOL_SOCKET, SO_TYPE, reinterpret_cast<char *>(&con.sock_type), &len);
     sock.set_nonblocking();
-    con.sock         = sock;
+    con.sock         = std::move(sock);
     con.is_connected = true;
     con.is_bound     = true;
   }
@@ -1223,7 +1223,7 @@ UnixNetVConnection::connectUp(EThread *t, int fd)
     goto fail;
   }
 
-  if (!sock.is_ok()) {
+  if (!con.sock.is_ok()) {
     res = con.connect(nullptr, options);
     if (res != 0) {
       // fast stopIO

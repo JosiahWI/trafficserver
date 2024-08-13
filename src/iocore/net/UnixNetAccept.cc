@@ -508,15 +508,13 @@ NetAccept::acceptFastEvent(int event, void *ep)
   int                 additional_accepts = NetHandler::get_additional_accepts();
 
   do {
-    socklen_t  sz = sizeof(con.addr);
-    UnixSocket sock{-1};
+    socklen_t sz = sizeof(con.addr);
     if (int res{server.sock.accept4(&con.addr.sa, &sz, SOCK_NONBLOCK | SOCK_CLOEXEC)}; res >= 0) {
-      sock = UnixSocket{res};
+      con.sock = UnixSocket{res};
     }
-    con.sock = sock;
     std::shared_ptr<ConnectionTracker::Group> conn_track_group;
 
-    if (likely(sock.is_ok())) {
+    if (likely(con.sock.is_ok())) {
       // check for throttle
       if (check_net_throttle(ACCEPT)) {
         // close the connection as we are in throttle state
@@ -528,13 +526,13 @@ NetAccept::acceptFastEvent(int event, void *ep)
         con.close();
         continue;
       }
-      Dbg(dbg_ctl_iocore_net, "accepted a new socket: %d", sock.get_fd());
+      Dbg(dbg_ctl_iocore_net, "accepted a new socket: %d", con.sock.get_fd());
       Metrics::Counter::increment(net_rsb.tcp_accept);
       if (opt.send_bufsize > 0) {
-        if (unlikely(sock.set_sndbuf_size(opt.send_bufsize))) {
+        if (unlikely(con.sock.set_sndbuf_size(opt.send_bufsize))) {
           bufsz = ROUNDUP(opt.send_bufsize, 1024);
           while (bufsz > 0) {
-            if (!sock.set_sndbuf_size(bufsz)) {
+            if (!con.sock.set_sndbuf_size(bufsz)) {
               break;
             }
             bufsz -= 1024;
@@ -542,10 +540,10 @@ NetAccept::acceptFastEvent(int event, void *ep)
         }
       }
       if (opt.recv_bufsize > 0) {
-        if (unlikely(sock.set_rcvbuf_size(opt.recv_bufsize))) {
+        if (unlikely(con.sock.set_rcvbuf_size(opt.recv_bufsize))) {
           bufsz = ROUNDUP(opt.recv_bufsize, 1024);
           while (bufsz > 0) {
-            if (!sock.set_rcvbuf_size(bufsz)) {
+            if (!con.sock.set_rcvbuf_size(bufsz)) {
               break;
             }
             bufsz -= 1024;
@@ -553,7 +551,7 @@ NetAccept::acceptFastEvent(int event, void *ep)
         }
       }
     } else {
-      res = sock.get_fd();
+      res = con.sock.get_fd();
     }
     // check return value from accept()
     if (res < 0) {

@@ -43,6 +43,8 @@
 #include <sys/linker.h>
 #endif
 
+#include <utility>
+
 namespace
 {
 DbgCtl dbg_ctl_http_tproxy{"http_tproxy"};
@@ -124,11 +126,9 @@ Connection::move(Connection &orig)
 {
   this->is_connected = orig.is_connected;
   this->is_bound     = orig.is_bound;
-  this->sock         = orig.sock;
-  // The target has taken ownership of the file descriptor
-  orig.sock       = UnixSocket{NO_FD};
-  this->addr      = orig.addr;
-  this->sock_type = orig.sock_type;
+  this->sock         = std::move(orig.sock);
+  this->addr         = orig.addr;
+  this->sock_type    = orig.sock_type;
 }
 
 static int

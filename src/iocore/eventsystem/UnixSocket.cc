@@ -50,6 +50,20 @@ static int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int fl
 #endif
 static unsigned int read_uint_from_fd(int fd);
 
+UnixSocket::UnixSocket(UnixSocket &&other)
+{
+  this->fd = other.fd;
+  other.fd = NO_SOCK;
+}
+
+UnixSocket &
+UnixSocket::operator=(UnixSocket &&other)
+{
+  this->fd = other.fd;
+  other.fd = NO_SOCK;
+  return *this;
+}
+
 int
 UnixSocket::set_nonblocking()
 {
