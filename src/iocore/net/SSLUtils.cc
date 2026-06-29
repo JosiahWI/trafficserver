@@ -42,6 +42,7 @@
 #include "tscore/ink_config.h"
 #include "tscore/SimpleTokenizer.h"
 #include "tscore/Layout.h"
+#include "tscore/ink_assert.h"
 #include "tscore/ink_cap.h"
 #include "tscore/ink_mutex.h"
 #include "tscore/Filenames.h"
@@ -54,6 +55,11 @@
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/conf.h>
+#ifdef OPENSSL_IS_OPENSSL3
+#include <openssl/decoder.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
+#endif
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #if HAVE_ENGINE_LOAD_DYNAMIC
@@ -487,6 +493,83 @@ SSLMultiCertConfigLoader::_enable_early_data([[maybe_unused]] SSL_CTX *ctx)
   return true;
 }
 
+#if OPENSSL_IS_OPENSSL3
+static EVP_PKEY *
+load_dhparams_file(char const *dhparams_file)
+{
+  EVP_PKEY          *pkey{};
+  scoped_Decoder_CTX dctx{OSSL_DECODER_CTX_new_for_pkey(&pkey, "PEM", NULL, "DH", OSSL_KEYMGMT_SELECT_ALL_PARAMETERS, NULL, NULL)};
+  if (!dctx) {
+    Error("failed to create OpenSSL decoder context - could not enable DH");
+    return nullptr;
+  }
+
+  ink_assert(OSSL_DECODER_CTX_get_num_decoders(dctx.get()) > 0);
+  scoped_BIO bio{BIO_new_file(dhparams_file, "r")};
+  if (!OSSL_DECODER_from_bio(dctx.get(), bio.get())) {
+    Error("SSL dhparams source returned invalid parameters");
+    return nullptr;
+  }
+
+  return pkey;
+}
+
+static EVP_PKEY *
+gen_dh_2048_256_pkey()
+{
+  scoped_PKEY_CTX pctx{EVP_PKEY_CTX_new_from_name(NULL, "DH", NULL)};
+  if (!pctx) {
+    Error("failed to create OpenSSL pkey context - could not enable DH");
+    return nullptr;
+  }
+
+  if (EVP_PKEY_keygen_init(pctx.get()) <= 0) {
+    Error("failed to initialize OpenSSL keygen - could not enable DH");
+    return nullptr;
+  }
+
+  char             prime_group[]{"dh_2048_256"};
+  OSSL_PARAM const params[]{OSSL_PARAM_utf8_string("group", prime_group, 0), OSSL_PARAM_END};
+
+  if (!EVP_PKEY_CTX_set_params(pctx.get(), params)) {
+    Error("SSL dhparams source returned invalid parameters");
+    return nullptr;
+  }
+
+  EVP_PKEY *pkey{};
+  EVP_PKEY_generate(pctx.get(), &pkey);
+
+  return pkey;
+}
+
+static SSL_CTX *
+ssl_context_enable_dhe(const char *dhparams_file, SSL_CTX *ctx)
+{
+  EVP_PKEY *pkey{};
+
+  if (dhparams_file) {
+    pkey = load_dhparams_file(dhparams_file);
+    if (!pkey) {
+      return nullptr;
+    }
+  } else {
+    pkey = gen_dh_2048_256_pkey();
+    if (!pkey) {
+      Error("SSL dhparams source returned invalid parameters");
+      return nullptr;
+    }
+  }
+
+  // If set0_tmp_dh_pkey succeeds, pkey ownership tranfers to ctx.
+  if (!SSL_CTX_set_options(ctx, SSL_OP_SINGLE_DH_USE) || !SSL_CTX_set0_tmp_dh_pkey(ctx, pkey)) {
+    EVP_PKEY_free(pkey);
+    Error("failed to configure SSL DH");
+    return nullptr;
+  }
+
+  return ctx;
+}
+#else
 static SSL_CTX *
 ssl_context_enable_dhe(const char *dhparams_file, SSL_CTX *ctx)
 {
@@ -514,6 +597,7 @@ ssl_context_enable_dhe(const char *dhparams_file, SSL_CTX *ctx)
 
   return ctx;
 }
+#endif
 
 #if TS_HAS_TLS_SESSION_TICKET
 static bool
