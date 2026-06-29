@@ -52,6 +52,7 @@ add_library(
   SSLSessionCache.cc
   SSLSessionTicket.cc
   SSLUtils.cc
+  SSLKeyUtils.cc
   OCSPStapling.cc
   TLSBasicSupport.cc
   TLSEventSupport.cc
