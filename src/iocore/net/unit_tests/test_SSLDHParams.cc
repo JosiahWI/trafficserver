@@ -147,7 +147,7 @@ TEST_CASE("ssl_context_enable_dhe: nullptr dhparams file falls back to built-in 
   CHECK(init_with_dhparams(nullptr));
 }
 
-TEST_CASE("ssl_context_enable_dhe: valid ffdhe2048 DH PEM file is accepted")
+TEST_CASE("ssl_context_enable_dhe: valid dh_2048_256 DH PEM file is accepted")
 {
   TempFile dh{make_valid_dh_pem()};
   CHECK(init_with_dhparams(dh.get_path()));
