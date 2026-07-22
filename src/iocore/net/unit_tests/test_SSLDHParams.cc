@@ -75,7 +75,7 @@ make_valid_dh_pem()
 std::string
 make_rsa_pem()
 {
-  EVP_PKEY *pkey = EVP_RSA_gen(1024);
+  EVP_PKEY *pkey = EVP_RSA_gen(2048);
   REQUIRE(pkey != nullptr);
   BIO *bio = BIO_new(BIO_s_mem());
   REQUIRE(PEM_write_bio_PrivateKey(bio, pkey, nullptr, nullptr, 0, nullptr, nullptr) == 1);

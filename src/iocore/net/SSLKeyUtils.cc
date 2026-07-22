@@ -83,6 +83,10 @@ load_dhparams_file(char const *dhparams_file)
 
   ink_assert(OSSL_DECODER_CTX_get_num_decoders(dctx.get()) > 0);
   scoped_BIO bio{BIO_new_file(dhparams_file, "r")};
+  if (!bio) {
+    Error("failed to open parameters file");
+    return nullptr;
+  }
   if (!OSSL_DECODER_from_bio(dctx.get(), bio.get())) {
     Error("SSL dhparams source returned invalid parameters");
     return nullptr;
