@@ -502,6 +502,10 @@ public:
    * responses), all header fields, and the terminating blank line. The message
    * body is not included.
    *
+   * @note Internal fields whose names begin with @c '@' are counted here even
+   *       though @c print() omits them from its output, so this length may
+   *       exceed the number of bytes @c print() actually writes.
+   *
    * @return Serialized byte length of the header.
    *
    * @pre The header must be initialized.
@@ -635,7 +639,7 @@ public:
    * until a result other than @c ParseResult::CONT is returned. When @c ParseResult::DONE is
    * returned, the request method, URL, version, and header fields are set on this header.
    *
-   * @param[in]     parser                Parser state. Must be the same object on each call for a given message.
+   * @param[in,out] parser                Parser state. Must be the same object on each call for a given message.
    * @param[in,out] start                 On entry, points to the first unparsed byte; on return,
    *                                       advanced past all consumed bytes.
    * @param[in]     end                   One past the last available byte of input.
@@ -669,10 +673,10 @@ public:
    * returned. When @c ParseResult::DONE is returned, the request method, URL, version, and
    * header fields are set on this header.
    *
-   * @param[in]     parser                Parser state. Must be the same object on each call for a given message.
-   * @param[in]     r                     Source of input data; bytes consumed by the parser are removed from
+   * @param[in,out] parser                Parser state. Must be the same object on each call for a given message.
+   * @param[in,out] r                     Source of input data; bytes consumed by the parser are removed from
    *                                       the reader.
-   * @param[in,out] bytes_used            Must be non-null; set to the number of bytes consumed from @p r.
+   * @param[out]    bytes_used            Must be non-null; set to the number of bytes consumed from @p r.
    * @param[in]     eof                   @c true if no more data will be provided after what is currently
    *                                       available on @p r.
    * @param[in]     strict_uri_parsing    URI compliance level: @c 0 performs no compliance check; @c 1 rejects
