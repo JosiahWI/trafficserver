@@ -496,8 +496,7 @@ public:
 
   int print(char *buf, int bufsize, int *bufindex, int *dumpoffset) const;
 
-  /**
-   * Returns the serialized byte length of the HTTP header.
+  /** Returns the serialized byte length of the HTTP header.
    *
    * The count includes the request-line (for requests) or status-line (for
    * responses), all header fields, and the terminating blank line. The message
@@ -630,8 +629,7 @@ public:
   void mark_early_data(bool flag = true) const;
   bool is_early_data() const;
 
-  /**
-   * Parse an HTTP/1.x request header incrementally from a raw buffer.
+  /** Parse an HTTP/1.x request header incrementally from a raw buffer.
    *
    * Parses input data into the header's request fields. Call repeatedly with the same @p parser
    * until a result other than @c ParseResult::CONT is returned. When @c ParseResult::DONE is
@@ -664,8 +662,7 @@ public:
                         size_t max_request_line_size = UINT16_MAX, size_t max_hdr_field_size = 131070);
   ParseResult parse_resp(HTTPParser *parser, const char **start, const char *end, bool eof);
 
-  /**
-   * Parse an HTTP/1.x request header incrementally from an @c IOBufferReader.
+  /** Parse an HTTP/1.x request header incrementally from an @c IOBufferReader.
    *
    * Reads and consumes data from @p r, parsing it into the header's request fields. Call
    * repeatedly with the same @p parser until a result other than @c ParseResult::CONT is
