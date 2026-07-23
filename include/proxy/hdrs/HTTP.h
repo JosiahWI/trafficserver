@@ -638,7 +638,7 @@ public:
    * returned, the request method, URL, version, and header fields are set on this header.
    *
    * @param parser              Parser state. Must be the same object on each call for a given message.
-   * @param start               [in,out] On entry, points to the first unparsed byte; on return,
+   * @param start               On entry, points to the first unparsed byte; on return,
    *                            advanced past all consumed bytes.
    * @param end                 One past the last available byte of input.
    * @param eof                 @c true if no more data will follow @p end.
