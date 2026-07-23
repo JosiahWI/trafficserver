@@ -635,19 +635,19 @@ public:
    * until a result other than @c ParseResult::CONT is returned. When @c ParseResult::DONE is
    * returned, the request method, URL, version, and header fields are set on this header.
    *
-   * @param parser              Parser state. Must be the same object on each call for a given message.
-   * @param start               On entry, points to the first unparsed byte; on return,
-   *                            advanced past all consumed bytes.
-   * @param end                 One past the last available byte of input.
-   * @param eof                 @c true if no more data will follow @p end.
-   * @param strict_uri_parsing  URI compliance level: @c 0 performs no compliance check; @c 1 rejects
-   *                            the URI unless every character is a valid RFC 3986 URI character; @c 2
-   *                            is more permissive, rejecting the URI only if it contains whitespace or
-   *                            non-printable characters. Other values behave like @c 0.
-   * @param max_request_line_size  Maximum byte length of the request line; exceeding it returns
-   *                               @c ParseResult::ERROR.
-   * @param max_hdr_field_size     Maximum byte length of a single header field; exceeding it
-   *                               returns @c ParseResult::ERROR.
+   * @param parser[in]                Parser state. Must be the same object on each call for a given message.
+   * @param start[in,out]             On entry, points to the first unparsed byte; on return,
+   *                                  advanced past all consumed bytes.
+   * @param end[in]                   One past the last available byte of input.
+   * @param eof[in]                   @c true if no more data will follow @p end.
+   * @param strict_uri_parsing[in]    URI compliance level: @c 0 performs no compliance check; @c 1 rejects
+   *                                  the URI unless every character is a valid RFC 3986 URI character; @c 2
+   *                                  is more permissive, rejecting the URI only if it contains whitespace or
+   *                                  non-printable characters. Other values behave like @c 0.
+   * @param max_request_line_size[in] Maximum byte length of the request line; exceeding it returns
+   *                                  @c ParseResult::ERROR.
+   * @param max_hdr_field_size[in]    Maximum byte length of a single header field; exceeding it
+   *                                  returns @c ParseResult::ERROR.
    *
    * @return @c ParseResult::DONE if a complete valid request header has been parsed;
    *         @c ParseResult::CONT if more data is required;
@@ -669,20 +669,20 @@ public:
    * returned. When @c ParseResult::DONE is returned, the request method, URL, version, and
    * header fields are set on this header.
    *
-   * @param parser              Parser state. Must be the same object on each call for a given message.
-   * @param r                   Source of input data; bytes consumed by the parser are removed from
-   *                            the reader.
-   * @param bytes_used          Must be non-null; set to the number of bytes consumed from @p r.
-   * @param eof                 @c true if no more data will be provided after what is currently
-   *                            available on @p r.
-   * @param strict_uri_parsing  URI compliance level: @c 0 performs no compliance check; @c 1 rejects
-   *                            the URI unless every character is a valid RFC 3986 URI character; @c 2
-   *                            is more permissive, rejecting the URI only if it contains whitespace or
-   *                            non-printable characters. Other values behave like @c 0.
-   * @param max_request_line_size  Maximum byte length of the request line; exceeding it returns
-   *                               @c ParseResult::ERROR.
-   * @param max_hdr_field_size     Maximum byte length of a single header field; exceeding it
-   *                               returns @c ParseResult::ERROR.
+   * @param parser[in]                 Parser state. Must be the same object on each call for a given message.
+   * @param r[in]                      Source of input data; bytes consumed by the parser are removed from
+   *                                   the reader.
+   * @param bytes_used[in,out]         Must be non-null; set to the number of bytes consumed from @p r.
+   * @param eof[in]                    @c true if no more data will be provided after what is currently
+   *                                   available on @p r.
+   * @param strict_uri_parsing[in]     URI compliance level: @c 0 performs no compliance check; @c 1 rejects
+   *                                   the URI unless every character is a valid RFC 3986 URI character; @c 2
+   *                                   is more permissive, rejecting the URI only if it contains whitespace or
+   *                                   non-printable characters. Other values behave like @c 0.
+   * @param max_request_line_size[in]  Maximum byte length of the request line; exceeding it returns
+   *                                   @c ParseResult::ERROR.
+   * @param max_hdr_field_size[in]     Maximum byte length of a single header field; exceeding it
+   *                                   returns @c ParseResult::ERROR.
    *
    * @return @c ParseResult::DONE if a complete valid request header has been parsed;
    *         @c ParseResult::CONT if more data is required;
