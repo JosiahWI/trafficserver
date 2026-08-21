@@ -561,6 +561,7 @@ TEST_CASE("ServerSessionPool::acquireSession", "[session_pool]")
   }
 
   pool.purge();
+  Metrics::Gauge::store(http_rsb.pooled_server_connections, 0);
 }
 
 TEST_CASE("ServerSessionPool::acquireSession consults the HttpSM", "[session_pool]")
@@ -813,4 +814,5 @@ TEST_CASE("ServerSessionPool::acquireSession consults the HttpSM", "[session_poo
   }
 
   pool.purge();
+  Metrics::Gauge::store(http_rsb.pooled_server_connections, 0);
 }
