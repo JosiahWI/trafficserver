@@ -28,18 +28,18 @@ Synopsis
 
     #include <ts/ts.h>
 
-.. function:: TSAction TSNetConnect(TSCont contp, sockaddr const * addr)
-.. function:: TSAction TSNetConnect(TSCont contp, sockaddr const * addr, TSNetConnectOptions * net_options)
+.. function:: TSAction TSNetConnect(TSCont contp, sockaddr const * destination)
+.. function:: TSAction TSNetConnect(TSCont contp, sockaddr const * destination, TSNetConnectOptions * net_options)
 
 Description
 ===========
 
-Open an outbound connection to :arg:`addr`. Both overloads apply the
+Open an outbound connection to :arg:`destination`. Both overloads apply the
 ``proxy.config.net.sock_*_out`` socket options.
 
 :arg:`contp` is the continuation to call back with the result.
-:arg:`addr` is the address to connect to. It is not retained after the call
-returns.
+:arg:`destination` is the address to connect to. It is not retained after the
+call returns.
 
 The two-argument overload opens a plain TCP connection, and the operating
 system chooses the source address and port. Use the overload that takes
@@ -57,8 +57,8 @@ as ``TS_EVENT_ERROR`` on the continuation of a VIO started with
 Connecting With Options
 -----------------------
 
-If ``tls`` is false, every field of :arg:`net_options` except ``from`` and
-``use_from_port`` is ignored. If ``tls`` is true:
+If ``tls`` is false, every field of :arg:`net_options` except ``source`` and
+``use_source_port`` is ignored. If ``tls`` is true:
 
 *  An empty ``sni_host_name`` is the same as ``NULL``, and an IP literal is not
    sent as SNI.
@@ -83,13 +83,14 @@ Preconditions
 =============
 
 *  :arg:`contp` was created with a non-null mutex.
-*  :arg:`addr` is an IPv4 or IPv6 address.
+*  :arg:`destination` is an IPv4 or IPv6 address.
 
 For the overload that takes :arg:`net_options`:
 
 *  :arg:`net_options` is non-null and every field is initialized; zero the
    struct before setting fields.
-*  ``from`` is ``NULL`` or an address of the same family as :arg:`addr`.
+*  ``source`` is ``NULL`` or an address of the same family as
+   :arg:`destination`.
 
 Thread Safety
 =============
@@ -114,11 +115,11 @@ These notes apply to the overload that takes :arg:`net_options`.
 .. note::
 
    Name verification checks the certificate against the IP address in
-   :arg:`addr`, not against ``sni_host_name``.
+   :arg:`destination`, not against ``sni_host_name``.
 
 .. note::
 
-   A non-null ``from`` may require ``CAP_NET_ADMIN``. If binding it fails, the
+   A non-null ``source`` may require ``CAP_NET_ADMIN``. If binding it fails, the
    result is ``TS_EVENT_NET_CONNECT_FAILED``.
 
 See Also

@@ -6664,10 +6664,10 @@ TSNetVConnClientAddrGet(TSVConn connp)
 }
 
 TSAction
-TSNetConnect(TSCont contp, sockaddr const *addr)
+TSNetConnect(TSCont contp, sockaddr const *destination)
 {
   sdk_assert(sdk_sanity_check_continuation(contp) == TS_SUCCESS);
-  sdk_assert(ats_is_ip(addr));
+  sdk_assert(ats_is_ip(destination));
 
   HttpConfigParams *http_config_param = HttpConfig::acquire();
   NetVCOptions      opt;
@@ -6680,14 +6680,14 @@ TSNetConnect(TSCont contp, sockaddr const *addr)
 
   FORCE_PLUGIN_SCOPED_MUTEX(contp);
 
-  return reinterpret_cast<TSAction>(netProcessor.connect_re(reinterpret_cast<INKContInternal *>(contp), addr, opt));
+  return reinterpret_cast<TSAction>(netProcessor.connect_re(reinterpret_cast<INKContInternal *>(contp), destination, opt));
 }
 
 TSAction
-TSNetConnect(TSCont contp, sockaddr const *addr, TSNetConnectOptions *net_options)
+TSNetConnect(TSCont contp, sockaddr const *destination, TSNetConnectOptions *net_options)
 {
   sdk_assert(sdk_sanity_check_continuation(contp) == TS_SUCCESS);
-  sdk_assert(ats_is_ip(addr));
+  sdk_assert(ats_is_ip(destination));
   NetVCOptions opt;
 
   HttpConfigParams *http_config_param = HttpConfig::acquire();
@@ -6699,11 +6699,11 @@ TSNetConnect(TSCont contp, sockaddr const *addr, TSNetConnectOptions *net_option
     HttpConfig::release(http_config_param);
   }
 
-  if (net_options->from) {
-    sdk_assert(ats_is_ip(net_options->from));
+  if (net_options->source) {
+    sdk_assert(ats_is_ip(net_options->source));
     opt.addr_binding = NetVCOptions::FOREIGN_ADDR;
-    opt.local_ip.assign(net_options->from);
-    opt.local_port = ats_ip_port_host_order(net_options->use_from_port ? net_options->from : 0);
+    opt.local_ip.assign(net_options->source);
+    opt.local_port = ats_ip_port_host_order(net_options->use_source_port ? net_options->source : 0);
   }
   FORCE_PLUGIN_SCOPED_MUTEX(contp);
   if (net_options->tls) {
@@ -6736,9 +6736,9 @@ TSNetConnect(TSCont contp, sockaddr const *addr, TSNetConnectOptions *net_option
         }
       }
     }
-    return reinterpret_cast<TSAction>(sslNetProcessor.connect_re(reinterpret_cast<INKContInternal *>(contp), addr, opt));
+    return reinterpret_cast<TSAction>(sslNetProcessor.connect_re(reinterpret_cast<INKContInternal *>(contp), destination, opt));
   } else {
-    return reinterpret_cast<TSAction>(netProcessor.connect_re(reinterpret_cast<INKContInternal *>(contp), addr, opt));
+    return reinterpret_cast<TSAction>(netProcessor.connect_re(reinterpret_cast<INKContInternal *>(contp), destination, opt));
   }
 }
 
