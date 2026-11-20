@@ -33,4 +33,5 @@ The netvconnection functions are listed below:
 
 -  :func:`TSNetAccept`
 -  :func:`TSNetConnect`
+-  :func:`TSNetConnectAdvanced`
 

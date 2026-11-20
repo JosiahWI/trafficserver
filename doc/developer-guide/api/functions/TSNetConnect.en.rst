@@ -32,3 +32,9 @@ Synopsis
 
 Description
 ===========
+
+See Also
+========
+
+:manpage:`TSAPI(3ts)`,
+:func:`TSNetConnectAdvanced`
