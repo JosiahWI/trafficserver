@@ -1163,7 +1163,8 @@ using TSAIOCallback      = struct tsapi_aiocallback *;
 using TSAcceptor         = struct tsapi_net_accept *;
 using TSRemapPluginInfo  = struct tsapi_remap_plugin_info *;
 
-using TSFetchSM = struct tsapi_fetchsm *;
+using TSFetchSM           = struct tsapi_fetchsm *;
+using TSNetConnectOptions = struct tsapi_netconnectoptions *;
 
 using TSThreadFunc           = void *(*)(void *data);
 using TSEventFunc            = int (*)(TSCont contp, TSEvent event, void *edata);

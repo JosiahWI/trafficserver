@@ -2245,17 +2245,182 @@ enum TSNetConnectFlags : uint32_t {
   TS_NET_CONNECT_FLAGS_USE_TRANSPARENT_SOURCE = 1 << 1, ///< Bind source with IP_TRANSPARENT so it need not be a local address.
 };
 
-struct TSNetConnectOptions {
-  struct sockaddr const   *source                    = nullptr; ///< Address from which to connect. NULL is default.
-  char const              *sni_hostname              = nullptr; ///< SNI hostname to use, NULL for none.
-  uint32_t                 flags                     = TS_NET_CONNECT_FLAGS_NONE;     ///< Bitwise OR of TSNetConnectFlags.
-  TSVerifyOriginCertFields verify_origin_cert_fields = TS_VERIFY_ORIGIN_CERT_INHERIT; ///< Verify the origin certificate fields.
-};
+/** Allocates a set of connection options for TSNetConnect.
+ *
+ * Every option starts at its default: no source address, no SNI hostname,
+ * flags @c TS_NET_CONNECT_FLAGS_NONE, and certificate verification
+ * @c TS_VERIFY_ORIGIN_CERT_INHERIT. One set of options may be passed to any
+ * number of TSNetConnect calls.
+ *
+ * @return Returns a non-null handle, which the caller must free with
+ *         TSNetConnectOptionsDestroy.
+ *
+ * @par Thread Safety
+ *   Thread-safe. May be called from any thread, including during
+ *   @c TSPluginInit.
+ *
+ * @see TSNetConnectOptionsSourceSet
+ * @see TSNetConnectOptionsSniHostnameSet
+ * @see TSNetConnectOptionsFlagsSet
+ * @see TSNetConnectOptionsVerifyOriginCertFieldsSet
+ */
+TSNetConnectOptions TSNetConnectOptionsCreate();
+
+/** Frees a set of connection options.
+ *
+ * TSNetConnect does not retain @p options, so they may be destroyed as soon
+ * as TSNetConnect returns, before @c contp is called back.
+ *
+ * @param[in] options The options to free, or null.
+ *
+ * @pre @p options is null, or was returned by TSNetConnectOptionsCreate and
+ *      has not been destroyed.
+ *
+ * @post If @p options is null, nothing happens. Otherwise @p options is
+ *       invalid and must not be passed to any function.
+ *
+ * @par Thread Safety
+ *   Must not run concurrently with any other function on the same
+ *   @p options. Calls on distinct options are independent.
+ *
+ * @see TSNetConnectOptionsCreate
+ * @see TSNetConnect
+ */
+void TSNetConnectOptionsDestroy(TSNetConnectOptions options) noexcept;
+
+/** Sets the local address that TSNetConnect binds its connections to.
+ *
+ * If no source is set, the operating system chooses the local address and
+ * port. Otherwise each connection is bound to @p source, including its port,
+ * as if by @c bind(2); a port of 0 lets the operating system choose an unused
+ * port. If the bind fails, @c contp of TSNetConnect receives
+ * @c TS_EVENT_NET_CONNECT_FAILED. Unless
+ * @c TS_NET_CONNECT_FLAGS_USE_TRANSPARENT_SOURCE is set, @p source must be
+ * an address of the host for the bind to succeed.
+ *
+ * TSNetConnect requires a set source to have the same address family as its
+ * destination.
+ *
+ * @param[in,out] options The options to modify.
+ * @param[in]     source  The local address to bind to, or null to unset it.
+ *
+ * @pre @p options was returned by TSNetConnectOptionsCreate and has not been
+ *      destroyed.
+ * @pre @p source is null, or points to a complete @c sockaddr_in or
+ *      @c sockaddr_in6.
+ *
+ * @post The source of @p options is a copy of the address at @p source, replacing any
+ *       previous one, or is unset if @p source is null. @p source need not
+ *       outlive the call.
+ *
+ * @par Thread Safety
+ *   Must not run concurrently with any other function on the same
+ *   @p options. Calls on distinct options are independent.
+ *
+ * @see TSNetConnectOptionsFlagsSet
+ * @see TSNetConnect
+ */
+void TSNetConnectOptionsSourceSet(TSNetConnectOptions options, struct sockaddr const *source);
+
+/** Sets the server name that TSNetConnect uses for TLS connections.
+ *
+ * The hostname is used only when @c TS_NET_CONNECT_FLAGS_USE_TLS is set.
+ * TSNetConnect then sends it as SNI, checks the server certificate name
+ * against it, and uses it to select the @c sni.yaml outbound settings, such
+ * as @c client_cert. If the hostname is unset or is an IP literal, no SNI is
+ * sent, and name verification and the @c sni.yaml lookup use the IP address
+ * of the destination instead.
+ *
+ * @param[in,out] options      The options to modify.
+ * @param[in]     sni_hostname A null-terminated hostname, or null or empty to
+ *                             unset it.
+ *
+ * @pre @p options was returned by TSNetConnectOptionsCreate and has not been
+ *      destroyed.
+ *
+ * @post The hostname of @p options is a copy of @p sni_hostname, replacing
+ *       any previous one, or is unset if @p sni_hostname is null or empty.
+ *       @p sni_hostname need not outlive the call.
+ *
+ * @par Thread Safety
+ *   Must not run concurrently with any other function on the same
+ *   @p options. Calls on distinct options are independent.
+ *
+ * @see TSNetConnectOptionsFlagsSet
+ * @see TSNetConnectOptionsVerifyOriginCertFieldsSet
+ * @see TSNetConnect
+ */
+void TSNetConnectOptionsSniHostnameSet(TSNetConnectOptions options, char const *sni_hostname);
+
+/** Sets the flags that control how TSNetConnect makes its connections.
+ *
+ * Without @c TS_NET_CONNECT_FLAGS_USE_TLS, TSNetConnect makes a plain TCP
+ * connection and ignores the SNI hostname and certificate verification
+ * options. @c TS_NET_CONNECT_FLAGS_USE_TRANSPARENT_SOURCE has no effect if
+ * no source is set or if Traffic Server was built without TPROXY support.
+ *
+ * @param[in,out] options The options to modify.
+ * @param[in]     flags   A bitwise OR of @c TSNetConnectFlags values, or
+ *                        @c TS_NET_CONNECT_FLAGS_NONE.
+ *
+ * @pre @p options was returned by TSNetConnectOptionsCreate and has not been
+ *      destroyed.
+ * @pre @p flags has no bits set other than those of @c TSNetConnectFlags
+ *      values.
+ *
+ * @post The flags of @p options are @p flags, replacing any previous flags.
+ *
+ * @par Thread Safety
+ *   Must not run concurrently with any other function on the same
+ *   @p options. Calls on distinct options are independent.
+ *
+ * @see TSNetConnectOptionsSourceSet
+ * @see TSNetConnectOptionsSniHostnameSet
+ * @see TSNetConnectOptionsVerifyOriginCertFieldsSet
+ * @see TSNetConnect
+ */
+void TSNetConnectOptionsFlagsSet(TSNetConnectOptions options, uint32_t flags);
+
+/** Selects which parts of the origin certificate TSNetConnect verifies.
+ *
+ * The selection is used only when @c TS_NET_CONNECT_FLAGS_USE_TLS is set.
+ * @c TS_VERIFY_ORIGIN_CERT_SIGNATURE checks the certificate signature,
+ * @c TS_VERIFY_ORIGIN_CERT_NAME checks the certificate name against the SNI
+ * hostname, and @c TS_VERIFY_ORIGIN_CERT_ALL checks both.
+ * @c TS_VERIFY_ORIGIN_CERT_INHERIT takes the selection from
+ * @c proxy.config.ssl.client.verify.server.properties.
+ *
+ * For every value other than @c TS_VERIFY_ORIGIN_CERT_NONE, the failure policy
+ * comes from @c proxy.config.ssl.client.verify.server.policy, and the
+ * @c sni.yaml settings @c verify_server_policy and
+ * @c verify_server_properties do not apply. Both records are read when
+ * TSNetConnect is called. With @c TS_VERIFY_ORIGIN_CERT_NONE the certificate
+ * is not verified, and @c TS_SSL_VERIFY_SERVER_HOOK is not called.
+ *
+ * @param[in,out] options The options to modify.
+ * @param[in]     fields  The parts of the certificate to verify.
+ *
+ * @pre @p options was returned by TSNetConnectOptionsCreate and has not been
+ *      destroyed.
+ * @pre @p fields is a @c TSVerifyOriginCertFields enumerator.
+ *
+ * @post The verification selection of @p options is @p fields, replacing any
+ *       previous selection.
+ *
+ * @par Thread Safety
+ *   Must not run concurrently with any other function on the same
+ *   @p options. Calls on distinct options are independent.
+ *
+ * @see TSNetConnectOptionsSniHostnameSet
+ * @see TSNetConnectOptionsFlagsSet
+ * @see TSNetConnect
+ */
+void TSNetConnectOptionsVerifyOriginCertFieldsSet(TSNetConnectOptions options, TSVerifyOriginCertFields fields);
 
 TSAction TSNetConnect(
   TSCont                 contp, /**< continuation that is called back when the attempted net connection either succeeds or fails. */
-  struct sockaddr const *destination,    /**< Address to which to connect. */
-  TSNetConnectOptions const *net_options /**< Connection options. */
+  struct sockaddr const *destination, /**< Address to which to connect. */
+  TSNetConnectOptions    options      /**< Connection options. */
 );
 
 /**
