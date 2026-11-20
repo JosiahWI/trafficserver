@@ -29,7 +29,7 @@ Synopsis
     #include <ts/ts.h>
 
 .. function:: TSAction TSNetConnect(TSCont contp, sockaddr const * destination)
-.. function:: TSAction TSNetConnect(TSCont contp, sockaddr const * destination, TSNetConnectOptions * net_options)
+.. function:: TSAction TSNetConnect(TSCont contp, sockaddr const * destination, TSNetConnectOptions const * net_options)
 
 Description
 ===========

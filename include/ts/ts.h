@@ -2249,8 +2249,8 @@ struct TSNetConnectOptions {
 
 TSAction TSNetConnect(
   TSCont                 contp, /**< continuation that is called back when the attempted net connection either succeeds or fails. */
-  struct sockaddr const *destination,     /**< Address to which to connect. */
-  struct TSNetConnectOptions *net_options /**< Connection options. */
+  struct sockaddr const *destination,           /**< Address to which to connect. */
+  struct TSNetConnectOptions const *net_options /**< Connection options. */
 );
 
 /**

@@ -6684,7 +6684,7 @@ TSNetConnect(TSCont contp, sockaddr const *destination)
 }
 
 TSAction
-TSNetConnect(TSCont contp, sockaddr const *destination, TSNetConnectOptions *net_options)
+TSNetConnect(TSCont contp, sockaddr const *destination, TSNetConnectOptions const *net_options)
 {
   if (net_options == nullptr) {
     return TSNetConnect(contp, destination);
