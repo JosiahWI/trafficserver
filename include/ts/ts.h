@@ -2242,7 +2242,7 @@ enum TSVerifyOriginCertFields {
 struct TSNetConnectOptions {
   struct sockaddr const   *source;             /**< Address from which to connect. NULL is default */
   bool                     use_source_port;    /**< Use the source port, if false the source port will be determined by the OS */
-  bool                     tls;                /**< Use TLS to connect */
+  bool                     use_tls;            /**< Use TLS to connect */
   bool                     verify_origin_cert; /**< Verify the signature of the origin certificate, use records.config settings */
   const char              *sni_host_name;      /**< sni hostname to use, NULL for none */
   const char              *alpn_protocol_group[20];   /**< alpn protocols list, NULL terminated, NULL is default h1/h2 */

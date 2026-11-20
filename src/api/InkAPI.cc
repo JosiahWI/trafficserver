@@ -6706,7 +6706,7 @@ TSNetConnect(TSCont contp, sockaddr const *destination, TSNetConnectOptions *net
     opt.local_port = ats_ip_port_host_order(net_options->use_source_port ? net_options->source : 0);
   }
   FORCE_PLUGIN_SCOPED_MUTEX(contp);
-  if (net_options->tls) {
+  if (net_options->use_tls) {
     if (net_options->sni_host_name && net_options->sni_host_name[0] != 0) {
       opt.set_sni_hostname(net_options->sni_host_name, strlen(net_options->sni_host_name));
     }

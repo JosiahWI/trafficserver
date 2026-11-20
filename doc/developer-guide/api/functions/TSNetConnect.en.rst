@@ -57,8 +57,8 @@ as ``TS_EVENT_ERROR`` on the continuation of a VIO started with
 Connecting With Options
 -----------------------
 
-If ``tls`` is false, every field of :arg:`net_options` except ``source`` and
-``use_source_port`` is ignored. If ``tls`` is true:
+If ``use_tls`` is false, every field of :arg:`net_options` except ``source`` and
+``use_source_port`` is ignored. If ``use_tls`` is true:
 
 *  An empty ``sni_host_name`` is the same as ``NULL``, and an IP literal is not
    sent as SNI.
