@@ -6712,6 +6712,9 @@ TSNetConnect(TSCont contp, sockaddr const *destination, TSNetConnectOptions cons
   }
   FORCE_PLUGIN_SCOPED_MUTEX(contp);
   if (net_options->use_tls) {
+    SSLConfigParams *params = SSLConfig::acquire();
+    sdk_assert(params != nullptr);
+
     if (net_options->sni_hostname && net_options->sni_hostname[0] != 0) {
       opt.set_sni_servername(net_options->sni_hostname, strlen(net_options->sni_hostname));
       opt.set_ssl_servername(net_options->sni_hostname);
@@ -6719,28 +6722,26 @@ TSNetConnect(TSCont contp, sockaddr const *destination, TSNetConnectOptions cons
     if (net_options->verify_origin_cert_fields != TS_VERIFY_ORIGIN_CERT_NONE) {
       // Set based on the current values of proxy.config.ssl.client.verify.server.policy
       //  and proxy.config.ssl.client.verify.server.properties
-      SSLConfigParams *params = SSLConfig::acquire();
-      if (params) {
-        opt.verifyServerPolicy = params->verifyServerPolicy;
-        switch (net_options->verify_origin_cert_fields) {
-        case TS_VERIFY_ORIGIN_CERT_INHERIT:
-          opt.verifyServerProperties = params->verifyServerProperties;
-          break;
-        case TS_VERIFY_ORIGIN_CERT_SIGNATURE:
-          opt.verifyServerProperties = YamlSNIConfig::Property::SIGNATURE_MASK;
-          break;
-        case TS_VERIFY_ORIGIN_CERT_NAME:
-          opt.verifyServerProperties = YamlSNIConfig::Property::NAME_MASK;
-          break;
-        case TS_VERIFY_ORIGIN_CERT_ALL:
-          opt.verifyServerProperties = YamlSNIConfig::Property::ALL_MASK;
-          break;
-        default:
-          opt.verifyServerProperties = YamlSNIConfig::Property::NONE;
-          break;
-        }
+      opt.verifyServerPolicy = params->verifyServerPolicy;
+      switch (net_options->verify_origin_cert_fields) {
+      case TS_VERIFY_ORIGIN_CERT_INHERIT:
+        opt.verifyServerProperties = params->verifyServerProperties;
+        break;
+      case TS_VERIFY_ORIGIN_CERT_SIGNATURE:
+        opt.verifyServerProperties = YamlSNIConfig::Property::SIGNATURE_MASK;
+        break;
+      case TS_VERIFY_ORIGIN_CERT_NAME:
+        opt.verifyServerProperties = YamlSNIConfig::Property::NAME_MASK;
+        break;
+      case TS_VERIFY_ORIGIN_CERT_ALL:
+        opt.verifyServerProperties = YamlSNIConfig::Property::ALL_MASK;
+        break;
+      default:
+        opt.verifyServerProperties = YamlSNIConfig::Property::NONE;
+        break;
       }
     }
+    SSLConfig::release(params);
     return reinterpret_cast<TSAction>(sslNetProcessor.connect_re(reinterpret_cast<INKContInternal *>(contp), destination, opt));
   } else {
     return reinterpret_cast<TSAction>(netProcessor.connect_re(reinterpret_cast<INKContInternal *>(contp), destination, opt));

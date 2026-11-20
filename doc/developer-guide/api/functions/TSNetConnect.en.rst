@@ -105,6 +105,8 @@ For the overload that takes :arg:`net_options`:
    struct before setting fields.
 *  ``source`` is ``NULL`` or an address of the same family as
    :arg:`destination`.
+*  If ``use_tls`` is true, ``TS_LIFECYCLE_PORTS_INITIALIZED_HOOK`` has already
+   been invoked. TLS is not initialized before then.
 
 Thread Safety
 =============
