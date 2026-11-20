@@ -6684,6 +6684,67 @@ TSNetConnect(TSCont contp, sockaddr const *addr)
 }
 
 TSAction
+TSNetConnectAdvanced(
+  TSCont               contp, /**< continuation that is called back when the attempted net connection either succeeds or fails. */
+  TSNetConnectOptions *net_options)
+{
+  sdk_assert(sdk_sanity_check_continuation(contp) == TS_SUCCESS);
+  sdk_assert(ats_is_ip(net_options->to));
+  NetVCOptions opt;
+
+  HttpConfigParams *http_config_param = HttpConfig::acquire();
+
+  if (http_config_param) {
+    opt.set_sock_param(http_config_param->oride.sock_recv_buffer_size_out, http_config_param->oride.sock_send_buffer_size_out,
+                       http_config_param->oride.sock_option_flag_out, http_config_param->oride.sock_packet_mark_out,
+                       http_config_param->oride.sock_packet_tos_out);
+    HttpConfig::release(http_config_param);
+  }
+
+  if (net_options->from) {
+    sdk_assert(ats_is_ip(net_options->from));
+    opt.addr_binding = NetVCOptions::FOREIGN_ADDR;
+    opt.local_ip.assign(net_options->from);
+    opt.local_port = ats_ip_port_host_order(net_options->use_from_port ? net_options->from : 0);
+  }
+  FORCE_PLUGIN_SCOPED_MUTEX(contp);
+  if (net_options->tls) {
+    if (net_options->sni_host_name && net_options->sni_host_name[0] != 0) {
+      opt.set_sni_hostname(net_options->sni_host_name, strlen(net_options->sni_host_name));
+    }
+    if (net_options->verify_origin_cert) {
+      // Set based on the current values of proxy.config.ssl.client.verify.server.policy
+      //  and proxy.config.ssl.client.verify.server.properties
+      SSLConfigParams *params = SSLConfig::acquire();
+      if (params) {
+        opt.verifyServerPolicy = params->verifyServerPolicy;
+        switch (net_options->verify_origin_cert_fields) {
+        case TS_VERIFY_ORIGIN_CERT_INHERIT:
+          opt.verifyServerProperties = params->verifyServerProperties;
+          break;
+        case TS_VERIFY_ORIGIN_CERT_SIGNATURE:
+          opt.verifyServerProperties = YamlSNIConfig::Property::SIGNATURE_MASK;
+          break;
+        case TS_VERIFY_ORIGIN_CERT_NAME:
+          opt.verifyServerProperties = YamlSNIConfig::Property::NAME_MASK;
+          break;
+        case TS_VERIFY_ORIGIN_CERT_ALL:
+          opt.verifyServerProperties = YamlSNIConfig::Property::ALL_MASK;
+          break;
+        case TS_VERIFY_ORIGIN_CERT_NONE:
+        default:
+          opt.verifyServerProperties = YamlSNIConfig::Property::NONE;
+          break;
+        }
+      }
+    }
+    return reinterpret_cast<TSAction>(sslNetProcessor.connect_re(reinterpret_cast<INKContInternal *>(contp), net_options->to, opt));
+  } else {
+    return reinterpret_cast<TSAction>(netProcessor.connect_re(reinterpret_cast<INKContInternal *>(contp), net_options->to, opt));
+  }
+}
+
+TSAction
 TSNetConnectTransparent(TSCont contp, sockaddr const *client_addr, sockaddr const *server_addr)
 {
   sdk_assert(sdk_sanity_check_continuation(contp) == TS_SUCCESS);

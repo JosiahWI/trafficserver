@@ -2231,6 +2231,29 @@ TSAction TSNetConnect(
   struct sockaddr const *to     /**< Address to which to connect. */
 );
 
+enum TSVerifyOriginCertFields {
+  TS_VERIFY_ORIGIN_CERT_INHERIT   = 0,
+  TS_VERIFY_ORIGIN_CERT_NONE      = 1,
+  TS_VERIFY_ORIGIN_CERT_SIGNATURE = 2,
+  TS_VERIFY_ORIGIN_CERT_NAME      = 3,
+  TS_VERIFY_ORIGIN_CERT_ALL       = 4,
+};
+
+struct TSNetConnectOptions {
+  struct sockaddr const   *from;               /**< Address from which to connect. NULL is default */
+  bool                     use_from_port;      /**< Use the from port, if false the from port will be determined by the OS */
+  struct sockaddr const   *to;                 /**< Address to which to connect. */
+  bool                     tls;                /**< Use TLS to connect */
+  bool                     verify_origin_cert; /**< Verify the signature of the origin certificate, use records.config settings */
+  const char              *sni_host_name;      /**< sni hostname to use, NULL for none */
+  const char              *alpn_protocol_group[20];   /**< alpn protocols list, NULL terminated, NULL is default h1/h2 */
+  TSVerifyOriginCertFields verify_origin_cert_fields; /**< Verify the origin certificate fields */
+};
+
+TSAction TSNetConnectAdvanced(
+  TSCont contp, /**< continuation that is called back when the attempted net connection either succeeds or fails. */
+  struct TSNetConnectOptions *net_options);
+
 /**
  * Retrieves the continuation associated with creating the TSVConn
  */
