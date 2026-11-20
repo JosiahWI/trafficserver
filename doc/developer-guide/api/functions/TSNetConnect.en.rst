@@ -58,21 +58,34 @@ as ``TS_EVENT_ERROR`` on the continuation of a VIO started with
 Connecting With Options
 -----------------------
 
+``TSNetConnectOptions`` holds the options as fields. ``flags`` is a bitwise OR
+of ``TSNetConnectFlags`` values:
+
+``TS_NET_CONNECT_FLAGS_USE_TLS``
+   Connect with TLS.
+
+``TS_NET_CONNECT_FLAGS_USE_TRANSPARENT_SOURCE``
+   Bind ``source`` transparently, as described below.
+
+A default-initialized ``TSNetConnectOptions`` has ``source`` and
+``sni_hostname`` ``NULL``, ``flags`` ``TS_NET_CONNECT_FLAGS_NONE``, and
+``verify_origin_cert_fields`` ``TS_VERIFY_ORIGIN_CERT_INHERIT``.
+
 If ``source`` is ``NULL``, the operating system chooses the source address and
 port. Otherwise, the connection is bound on the host to ``source``, including
 its port, as if by :manpage:`bind(2)`. A port of 0 lets the operating system
 choose an unused local port. If the socket cannot be bound, :arg:`contp`
 receives ``TS_EVENT_NET_CONNECT_FAILED``.
 
-If ``use_transparent_source`` is true, on builds with TPROXY support
-``IP_TRANSPARENT`` is set on the socket before it is bound, so ``source`` need
-not be an address of the host. Setting ``IP_TRANSPARENT`` may require
-``CAP_NET_ADMIN``. On builds without TPROXY support, ``source`` is bound as if
-``use_transparent_source`` were false. ``use_transparent_source`` is ignored if
-``source`` is ``NULL``.
+With ``TS_NET_CONNECT_FLAGS_USE_TRANSPARENT_SOURCE``, on builds with TPROXY
+support ``IP_TRANSPARENT`` is set on the socket before it is bound, so
+``source`` need not be an address of the host. Setting ``IP_TRANSPARENT`` may
+require ``CAP_NET_ADMIN``. On builds without TPROXY support, ``source`` is
+bound as if the flag were not set. The flag is ignored if ``source`` is
+``NULL``.
 
-If ``use_tls`` is false, every field of :arg:`net_options` except ``source`` and
-``use_transparent_source`` is ignored. If ``use_tls`` is true:
+Without ``TS_NET_CONNECT_FLAGS_USE_TLS``, ``sni_hostname`` and
+``verify_origin_cert_fields`` are ignored. With it:
 
 *  ``sni_hostname`` is sent as SNI and is the name that name verification
    checks the certificate against. It also selects the :file:`sni.yaml`
@@ -83,9 +96,8 @@ If ``use_tls`` is false, every field of :arg:`net_options` except ``source`` and
 *  ``verify_origin_cert_fields`` selects what is checked in the origin
    certificate. With any value other than ``TS_VERIFY_ORIGIN_CERT_NONE``, the
    policy is :ts:cv:`proxy.config.ssl.client.verify.server.policy`.
-   ``TS_VERIFY_ORIGIN_CERT_INHERIT``, the value of a zeroed struct, also takes
-   the selection from
-   :ts:cv:`proxy.config.ssl.client.verify.server.properties`.
+   ``TS_VERIFY_ORIGIN_CERT_INHERIT``, the default, also takes the selection
+   from :ts:cv:`proxy.config.ssl.client.verify.server.properties`.
 *  With ``TS_VERIFY_ORIGIN_CERT_NONE``, the origin certificate is not verified,
    whatever :file:`records.yaml` and :file:`sni.yaml` say.
 
@@ -106,12 +118,11 @@ Preconditions
 
 For the overload that takes :arg:`net_options`:
 
-*  If :arg:`net_options` is non-null, every field is initialized; zero the
-   struct before setting fields.
 *  ``source`` is ``NULL`` or an address of the same family as
    :arg:`destination`.
-*  If ``use_tls`` is true, ``TS_LIFECYCLE_PORTS_INITIALIZED_HOOK`` has already
-   been invoked. TLS is not initialized before then.
+*  If ``TS_NET_CONNECT_FLAGS_USE_TLS`` is set,
+   ``TS_LIFECYCLE_PORTS_INITIALIZED_HOOK`` has already been invoked. TLS is not
+   initialized before then.
 
 Thread Safety
 =============

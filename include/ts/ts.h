@@ -2239,18 +2239,23 @@ enum TSVerifyOriginCertFields {
   TS_VERIFY_ORIGIN_CERT_ALL       = 4,
 };
 
+enum TSNetConnectFlags : uint32_t {
+  TS_NET_CONNECT_FLAGS_NONE                   = 0,
+  TS_NET_CONNECT_FLAGS_USE_TLS                = 1 << 0, ///< Connect with TLS.
+  TS_NET_CONNECT_FLAGS_USE_TRANSPARENT_SOURCE = 1 << 1, ///< Bind source with IP_TRANSPARENT so it need not be a local address.
+};
+
 struct TSNetConnectOptions {
-  struct sockaddr const   *source;                    /**< Address from which to connect. NULL is default */
-  bool                     use_transparent_source;    /**< Bind source with IP_TRANSPARENT so it need not be a local address */
-  bool                     use_tls;                   /**< Use TLS to connect */
-  const char              *sni_hostname;              /**< sni hostname to use, NULL for none */
-  TSVerifyOriginCertFields verify_origin_cert_fields; /**< Verify the origin certificate fields */
+  struct sockaddr const   *source                    = nullptr; ///< Address from which to connect. NULL is default.
+  char const              *sni_hostname              = nullptr; ///< SNI hostname to use, NULL for none.
+  uint32_t                 flags                     = TS_NET_CONNECT_FLAGS_NONE;     ///< Bitwise OR of TSNetConnectFlags.
+  TSVerifyOriginCertFields verify_origin_cert_fields = TS_VERIFY_ORIGIN_CERT_INHERIT; ///< Verify the origin certificate fields.
 };
 
 TSAction TSNetConnect(
   TSCont                 contp, /**< continuation that is called back when the attempted net connection either succeeds or fails. */
-  struct sockaddr const *destination,           /**< Address to which to connect. */
-  struct TSNetConnectOptions const *net_options /**< Connection options. */
+  struct sockaddr const *destination,    /**< Address to which to connect. */
+  TSNetConnectOptions const *net_options /**< Connection options. */
 );
 
 /**
