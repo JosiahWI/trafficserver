@@ -69,9 +69,9 @@ socket cannot be bound, :arg:`contp` receives ``TS_EVENT_NET_CONNECT_FAILED``.
 If ``use_tls`` is false, every field of :arg:`net_options` except ``source`` is
 ignored. If ``use_tls`` is true:
 
-*  ``sni_host_name`` is sent as SNI and is the name that name verification
+*  ``sni_hostname`` is sent as SNI and is the name that name verification
    checks the certificate against. It also selects the :file:`sni.yaml`
-   outbound settings, such as ``client_cert``. An empty ``sni_host_name`` is the
+   outbound settings, such as ``client_cert``. An empty ``sni_hostname`` is the
    same as ``NULL``. If it is ``NULL`` or an IP literal, no SNI is sent, and
    both name verification and the :file:`sni.yaml` lookup use the IP address in
    :arg:`destination`.
