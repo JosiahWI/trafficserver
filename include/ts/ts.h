@@ -2241,6 +2241,7 @@ enum TSVerifyOriginCertFields {
 
 struct TSNetConnectOptions {
   struct sockaddr const   *source;                    /**< Address from which to connect. NULL is default */
+  bool                     use_transparent_source;    /**< Bind source with IP_TRANSPARENT so it need not be a local address */
   bool                     use_tls;                   /**< Use TLS to connect */
   const char              *sni_hostname;              /**< sni hostname to use, NULL for none */
   TSVerifyOriginCertFields verify_origin_cert_fields; /**< Verify the origin certificate fields */

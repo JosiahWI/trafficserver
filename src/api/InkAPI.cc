@@ -6706,7 +6706,7 @@ TSNetConnect(TSCont contp, sockaddr const *destination, TSNetConnectOptions cons
   if (net_options->source) {
     sdk_assert(ats_is_ip(net_options->source));
     sdk_assert(net_options->source->sa_family == destination->sa_family);
-    opt.addr_binding = NetVCOptions::FOREIGN_ADDR;
+    opt.addr_binding = net_options->use_transparent_source ? NetVCOptions::FOREIGN_ADDR : NetVCOptions::INTF_ADDR;
     opt.local_ip.assign(net_options->source);
     opt.local_port = ats_ip_port_host_order(net_options->source);
   }

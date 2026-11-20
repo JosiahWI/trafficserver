@@ -61,13 +61,18 @@ Connecting With Options
 If ``source`` is ``NULL``, the operating system chooses the source address and
 port. Otherwise, the connection is bound on the host to ``source``, including
 its port, as if by :manpage:`bind(2)`. A port of 0 lets the operating system
-choose an unused local port. On builds with TPROXY support, ``IP_TRANSPARENT``
-is set on the socket before it is bound, so ``source`` need not be an address
-of the host. Setting ``IP_TRANSPARENT`` may require ``CAP_NET_ADMIN``. If the
-socket cannot be bound, :arg:`contp` receives ``TS_EVENT_NET_CONNECT_FAILED``.
+choose an unused local port. If the socket cannot be bound, :arg:`contp`
+receives ``TS_EVENT_NET_CONNECT_FAILED``.
 
-If ``use_tls`` is false, every field of :arg:`net_options` except ``source`` is
-ignored. If ``use_tls`` is true:
+If ``use_transparent_source`` is true, on builds with TPROXY support
+``IP_TRANSPARENT`` is set on the socket before it is bound, so ``source`` need
+not be an address of the host. Setting ``IP_TRANSPARENT`` may require
+``CAP_NET_ADMIN``. On builds without TPROXY support, ``source`` is bound as if
+``use_transparent_source`` were false. ``use_transparent_source`` is ignored if
+``source`` is ``NULL``.
+
+If ``use_tls`` is false, every field of :arg:`net_options` except ``source`` and
+``use_transparent_source`` is ignored. If ``use_tls`` is true:
 
 *  ``sni_hostname`` is sent as SNI and is the name that name verification
    checks the certificate against. It also selects the :file:`sni.yaml`
