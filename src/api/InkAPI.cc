@@ -6686,6 +6686,10 @@ TSNetConnect(TSCont contp, sockaddr const *destination)
 TSAction
 TSNetConnect(TSCont contp, sockaddr const *destination, TSNetConnectOptions *net_options)
 {
+  if (net_options == nullptr) {
+    return TSNetConnect(contp, destination);
+  }
+
   sdk_assert(sdk_sanity_check_continuation(contp) == TS_SUCCESS);
   sdk_assert(ats_is_ip(destination));
   NetVCOptions opt;

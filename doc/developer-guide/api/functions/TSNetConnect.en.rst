@@ -44,7 +44,8 @@ call returns.
 The two-argument overload opens a plain TCP connection, and the operating
 system chooses the source address and port. Use the overload that takes
 :arg:`net_options` to bind a source address or to connect with TLS. Nothing in
-:arg:`net_options` is retained after the call returns.
+:arg:`net_options` is retained after the call returns. If :arg:`net_options` is
+``NULL``, the call behaves exactly like the two-argument overload.
 
 On success, :arg:`contp` receives ``TS_EVENT_NET_CONNECT`` with the new
 :type:`TSVConn` as event data, which the plugin must eventually close. That
@@ -99,7 +100,7 @@ Preconditions
 
 For the overload that takes :arg:`net_options`:
 
-*  :arg:`net_options` is non-null and every field is initialized; zero the
+*  If :arg:`net_options` is non-null, every field is initialized; zero the
    struct before setting fields.
 *  ``source`` is ``NULL`` or an address of the same family as
    :arg:`destination`.
