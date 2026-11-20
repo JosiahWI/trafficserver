@@ -75,13 +75,14 @@ ignored. If ``use_tls`` is true:
    same as ``NULL``. If it is ``NULL`` or an IP literal, no SNI is sent, and
    both name verification and the :file:`sni.yaml` lookup use the IP address in
    :arg:`destination`.
-*  If ``verify_origin_cert`` is false, the origin certificate is not verified,
-   whatever :file:`records.yaml` and :file:`sni.yaml` say.
-*  If ``verify_origin_cert`` is true, the policy is
-   :ts:cv:`proxy.config.ssl.client.verify.server.policy`, and
-   ``verify_origin_cert_fields`` selects what is checked.
-   ``TS_VERIFY_ORIGIN_CERT_INHERIT`` takes that selection from
+*  ``verify_origin_cert_fields`` selects what is checked in the origin
+   certificate. With any value other than ``TS_VERIFY_ORIGIN_CERT_NONE``, the
+   policy is :ts:cv:`proxy.config.ssl.client.verify.server.policy`.
+   ``TS_VERIFY_ORIGIN_CERT_INHERIT``, the value of a zeroed struct, also takes
+   the selection from
    :ts:cv:`proxy.config.ssl.client.verify.server.properties`.
+*  With ``TS_VERIFY_ORIGIN_CERT_NONE``, the origin certificate is not verified,
+   whatever :file:`records.yaml` and :file:`sni.yaml` say.
 
 Return Value
 ============

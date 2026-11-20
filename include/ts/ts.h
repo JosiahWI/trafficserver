@@ -2240,10 +2240,9 @@ enum TSVerifyOriginCertFields {
 };
 
 struct TSNetConnectOptions {
-  struct sockaddr const   *source;             /**< Address from which to connect. NULL is default */
-  bool                     use_tls;            /**< Use TLS to connect */
-  bool                     verify_origin_cert; /**< Verify the signature of the origin certificate, use records.config settings */
-  const char              *sni_hostname;       /**< sni hostname to use, NULL for none */
+  struct sockaddr const   *source;                    /**< Address from which to connect. NULL is default */
+  bool                     use_tls;                   /**< Use TLS to connect */
+  const char              *sni_hostname;              /**< sni hostname to use, NULL for none */
   TSVerifyOriginCertFields verify_origin_cert_fields; /**< Verify the origin certificate fields */
 };
 

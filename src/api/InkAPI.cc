@@ -6716,7 +6716,7 @@ TSNetConnect(TSCont contp, sockaddr const *destination, TSNetConnectOptions cons
       opt.set_sni_servername(net_options->sni_hostname, strlen(net_options->sni_hostname));
       opt.set_ssl_servername(net_options->sni_hostname);
     }
-    if (net_options->verify_origin_cert) {
+    if (net_options->verify_origin_cert_fields != TS_VERIFY_ORIGIN_CERT_NONE) {
       // Set based on the current values of proxy.config.ssl.client.verify.server.policy
       //  and proxy.config.ssl.client.verify.server.properties
       SSLConfigParams *params = SSLConfig::acquire();
@@ -6735,7 +6735,6 @@ TSNetConnect(TSCont contp, sockaddr const *destination, TSNetConnectOptions cons
         case TS_VERIFY_ORIGIN_CERT_ALL:
           opt.verifyServerProperties = YamlSNIConfig::Property::ALL_MASK;
           break;
-        case TS_VERIFY_ORIGIN_CERT_NONE:
         default:
           opt.verifyServerProperties = YamlSNIConfig::Property::NONE;
           break;
