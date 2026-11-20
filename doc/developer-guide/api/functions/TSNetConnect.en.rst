@@ -120,7 +120,7 @@ These notes apply to the overload that takes :arg:`net_options`.
 
 .. note::
 
-   ``alpn_protocol_group`` is ignored. ALPN comes from
+   The ALPN protocols offered come from
    :ts:cv:`proxy.config.ssl.client.alpn_protocols`, which by default offers
    none.
 
