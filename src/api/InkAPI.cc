@@ -6708,7 +6708,8 @@ TSNetConnect(TSCont contp, sockaddr const *destination, TSNetConnectOptions *net
   FORCE_PLUGIN_SCOPED_MUTEX(contp);
   if (net_options->use_tls) {
     if (net_options->sni_host_name && net_options->sni_host_name[0] != 0) {
-      opt.set_sni_hostname(net_options->sni_host_name, strlen(net_options->sni_host_name));
+      opt.set_sni_servername(net_options->sni_host_name, strlen(net_options->sni_host_name));
+      opt.set_ssl_servername(net_options->sni_host_name);
     }
     if (net_options->verify_origin_cert) {
       // Set based on the current values of proxy.config.ssl.client.verify.server.policy

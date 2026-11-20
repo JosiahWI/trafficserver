@@ -68,8 +68,12 @@ socket cannot be bound, :arg:`contp` receives ``TS_EVENT_NET_CONNECT_FAILED``.
 If ``use_tls`` is false, every field of :arg:`net_options` except ``source`` is
 ignored. If ``use_tls`` is true:
 
-*  An empty ``sni_host_name`` is the same as ``NULL``, and an IP literal is not
-   sent as SNI.
+*  ``sni_host_name`` is sent as SNI and is the name that name verification
+   checks the certificate against. It also selects the :file:`sni.yaml`
+   outbound settings, such as ``client_cert``. An empty ``sni_host_name`` is the
+   same as ``NULL``. If it is ``NULL`` or an IP literal, no SNI is sent, and
+   both name verification and the :file:`sni.yaml` lookup use the IP address in
+   :arg:`destination`.
 *  If ``verify_origin_cert`` is false, the origin certificate is not verified,
    whatever :file:`records.yaml` and :file:`sni.yaml` say.
 *  If ``verify_origin_cert`` is true, the policy is
@@ -119,11 +123,6 @@ These notes apply to the overload that takes :arg:`net_options`.
    ``alpn_protocol_group`` is ignored. ALPN comes from
    :ts:cv:`proxy.config.ssl.client.alpn_protocols`, which by default offers
    none.
-
-.. note::
-
-   Name verification checks the certificate against the IP address in
-   :arg:`destination`, not against ``sni_host_name``.
 
 See Also
 ========
