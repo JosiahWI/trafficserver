@@ -6684,12 +6684,10 @@ TSNetConnect(TSCont contp, sockaddr const *addr)
 }
 
 TSAction
-TSNetConnectAdvanced(
-  TSCont               contp, /**< continuation that is called back when the attempted net connection either succeeds or fails. */
-  TSNetConnectOptions *net_options)
+TSNetConnect(TSCont contp, sockaddr const *addr, TSNetConnectOptions *net_options)
 {
   sdk_assert(sdk_sanity_check_continuation(contp) == TS_SUCCESS);
-  sdk_assert(ats_is_ip(net_options->to));
+  sdk_assert(ats_is_ip(addr));
   NetVCOptions opt;
 
   HttpConfigParams *http_config_param = HttpConfig::acquire();
@@ -6738,9 +6736,9 @@ TSNetConnectAdvanced(
         }
       }
     }
-    return reinterpret_cast<TSAction>(sslNetProcessor.connect_re(reinterpret_cast<INKContInternal *>(contp), net_options->to, opt));
+    return reinterpret_cast<TSAction>(sslNetProcessor.connect_re(reinterpret_cast<INKContInternal *>(contp), addr, opt));
   } else {
-    return reinterpret_cast<TSAction>(netProcessor.connect_re(reinterpret_cast<INKContInternal *>(contp), net_options->to, opt));
+    return reinterpret_cast<TSAction>(netProcessor.connect_re(reinterpret_cast<INKContInternal *>(contp), addr, opt));
   }
 }
 

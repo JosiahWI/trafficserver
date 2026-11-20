@@ -121,9 +121,7 @@ Event                                              Event Sender                 
 :enumerator:`TS_EVENT_VCONN_WRITE_COMPLETE`        :func:`TSVConnWrite`                                :type:`TSVIO`
 :enumerator:`TS_EVENT_VCONN_EOS`                   :func:`TSVConnRead`                                 :type:`TSVIO`
 :enumerator:`TS_EVENT_NET_CONNECT`                 :func:`TSNetConnect`                                :type:`TSVConn`
-                                                     :func:`TSNetConnectAdvanced`
 :enumerator:`TS_EVENT_NET_CONNECT_FAILED`          :func:`TSNetConnect`                                :type:`TSVConn`
-                                                     :func:`TSNetConnectAdvanced`
 :enumerator:`TS_EVENT_HTTP_CONTINUE`
 :enumerator:`TS_EVENT_HTTP_ERROR`
 :enumerator:`TS_EVENT_MGMT_UPDATE`                 :func:`TSMgmtUpdateRegister`

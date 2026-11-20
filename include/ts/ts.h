@@ -2242,7 +2242,6 @@ enum TSVerifyOriginCertFields {
 struct TSNetConnectOptions {
   struct sockaddr const   *from;               /**< Address from which to connect. NULL is default */
   bool                     use_from_port;      /**< Use the from port, if false the from port will be determined by the OS */
-  struct sockaddr const   *to;                 /**< Address to which to connect. */
   bool                     tls;                /**< Use TLS to connect */
   bool                     verify_origin_cert; /**< Verify the signature of the origin certificate, use records.config settings */
   const char              *sni_host_name;      /**< sni hostname to use, NULL for none */
@@ -2250,9 +2249,11 @@ struct TSNetConnectOptions {
   TSVerifyOriginCertFields verify_origin_cert_fields; /**< Verify the origin certificate fields */
 };
 
-TSAction TSNetConnectAdvanced(
-  TSCont contp, /**< continuation that is called back when the attempted net connection either succeeds or fails. */
-  struct TSNetConnectOptions *net_options);
+TSAction TSNetConnect(
+  TSCont                 contp, /**< continuation that is called back when the attempted net connection either succeeds or fails. */
+  struct sockaddr const *addr,  /**< Address to which to connect. */
+  struct TSNetConnectOptions *net_options /**< Connection options. */
+);
 
 /**
  * Retrieves the continuation associated with creating the TSVConn
